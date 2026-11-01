@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>XGBMS</title>
+<style>
+:root{
+    --bg:#fbf6ee;
+    --card:#fffdfa;
+    --ink:#5a4b40;
+    --ink2:#a08d7e;
+    --ink3:#cbbbaa;
+    --peach:#ff9d76;
+    --peach2:#ff7e5f;
+    --mint:#6fd0b2;
+    --lilac:#b3a0e0;
+    --butter:#ffcf5c;
+    --rose:#ff8fa3;
+    --line:rgba(150,125,100,.16);
+    --sh:0 10px 30px rgba(190,160,130,.22), 0 2px 8px rgba(190,160,130,.12);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;min-height:100%}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,"PingFang SC","SF Pro Text",system-ui,sans-serif;
+    padding:env(safe-area-inset-top) 14px calc(env(safe-area-inset-bottom) + 26px);
+    overflow-x:hidden;position:relative;
+  }
+  body::before{
+    content:"";position:fixed;left:-120px;top:-140px;width:420px;height:420px;z-index:0;
+    border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle,rgba(255,190,150,.45),transparent 68%);
+    animation:float1 14s ease-in-out infinite;
+  }
+  body::after{
+    content:"";position:fixed;right:-140px;top:26%;width:440px;height:440px;z-index:0;
+    border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle,rgba(170,220,205,.42),transparent 68%);
+    animation:float2 18s ease-in-out infinite;
+  }
+  @keyframes float1{50%{transform:translate(40px,50px) scale(1.1)}}
+  @keyframes float2{50%{transform:translate(-50px,-40px) scale(1.12)}}
+  .scan{display:none}
+
+  .wrap{position:relative;z-index:2;max-width:540px;margin:0 auto}
+
+  header{display:flex;align-items:center;justify-content:space-between;padding:20px 4px 14px}
+  .brand{font-size:19px;font-weight:700;letter-spacing:.10em;color:var(--ink)}
+  .brand small{display:block;font-size:9px;font-weight:500;letter-spacing:.22em;
+               color:var(--ink3);margin-top:6px}
+  .status{display:flex;align-items:center;font-size:10px;font-weight:600;
+          letter-spacing:.16em;color:var(--ink2)}
+  .dot{width:9px;height:9px;border-radius:50%;background:#d8cabb;margin-right:7px;transition:.3s}
+  .dot.on{background:var(--mint);box-shadow:0 0 0 4px rgba(111,208,178,.20)}
+  .dot.scan{background:var(--butter);box-shadow:0 0 0 4px rgba(255,207,92,.22);animation:blink 1.1s ease-in-out infinite}
+  @keyframes blink{50%{opacity:.35}}
+
+  .card{
+    position:relative;margin-bottom:14px;padding:18px;border-radius:24px;
+    background:var(--card);border:1px solid rgba(255,255,255,.9);
+    box-shadow:var(--sh);overflow:hidden;
+    animation:fadeup .5s backwards;
+  }
+  @keyframes fadeup{from{opacity:0;transform:translateY(14px)}}
+  .card::before{content:"";position:absolute;top:0;left:22px;right:22px;height:3px;
+    border-radius:0 0 4px 4px;
+    background:linear-gradient(90deg,var(--peach),var(--butter),var(--mint),var(--lilac))}
+  .card .cor{display:none}
+
+  .hero{display:flex;align-items:center;gap:18px;padding:22px 18px}
+  .volt{flex:1;min-width:0}
+  .volt .num{font-size:58px;line-height:1;font-weight:700;letter-spacing:-.03em;color:var(--ink);
+             font-variant-numeric:tabular-nums}
+  .volt .num.pulse{animation:pop .5s}
+  @keyframes pop{0%{transform:scale(1.05);color:var(--peach2)}100%{transform:scale(1)}}
+  .volt .unit{font-size:18px;font-weight:600;color:var(--peach);margin-left:5px}
+  .volt .lbl{font-size:9px;font-weight:600;letter-spacing:.24em;color:var(--ink3);margin-top:11px}
+
+  .ring{position:relative;width:118px;height:118px;flex:0 0 auto}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .glow{position:absolute;inset:4px;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle,rgba(255,180,140,.30),transparent 70%);
+    animation:soft 3.4s ease-in-out infinite}
+  @keyframes soft{50%{opacity:.5}}
+  .ring .txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .p{font-size:30px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+  .ring .p span{font-size:13px;color:var(--peach);margin-left:1px}
+  .ring .t{font-size:8px;font-weight:600;letter-spacing:.26em;color:var(--ink3);margin-top:3px}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  .k{
+    position:relative;border-radius:20px;padding:14px 16px;
+    background:var(--card);box-shadow:var(--sh);border:1px solid rgba(255,255,255,.9);
+    overflow:hidden;
+  }
+  .k::before{content:"";position:absolute;left:0;top:16px;bottom:16px;width:4px;border-radius:0 4px 4px 0;
+    background:var(--mint)}
+  .k .v{font-size:24px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+  .k .v i{font-size:11px;font-style:normal;font-weight:600;color:var(--ink3);margin-left:3px}
+  .k .n{font-size:8px;font-weight:600;letter-spacing:.22em;color:var(--ink3);margin-top:8px}
+  .k:nth-child(1)::before{background:var(--peach)}
+  .k:nth-child(2)::before{background:var(--lilac)}
+  .k:nth-child(3)::before{background:var(--butter)}
+  .k:nth-child(4)::before{background:var(--mint)}
+  .k.bad::before{background:var(--rose)}
+  .k.bad .v{color:var(--rose)}
+  .k.warn::before{background:var(--butter)}
+  .k.warn .v{color:#e0a92c}
+
+  .ttl{display:flex;justify-content:space-between;align-items:baseline;
+       font-size:9px;font-weight:600;letter-spacing:.22em;color:var(--ink3);margin:0 2px 13px}
+  .ttl b{color:var(--peach);font-weight:700;letter-spacing:.06em}
+
+  canvas{display:block;width:100%}
+
+  .cells{display:flex;align-items:flex-end;gap:4px;height:88px;margin-top:6px}
+  .cell{flex:1;border-radius:6px 6px 3px 3px;min-height:5px;
+        transition:height .45s cubic-bezier(.34,1.5,.5,1);
+        background:linear-gradient(180deg,#8fdfc4,#d9f4ea)}
+  .cell.lo{background:linear-gradient(180deg,var(--lilac),#eee6fb)}
+  .cell.hi{background:linear-gradient(180deg,var(--peach),#ffe6da)}
+  .cellaxis{display:flex;justify-content:space-between;font-size:8px;font-weight:600;
+            color:var(--ink3);margin-top:9px;letter-spacing:.14em}
+
+  .row{display:flex;justify-content:space-between;font-size:12px;color:var(--ink2);
+       padding:9px 2px;border-bottom:1px dashed rgba(150,125,100,.15)}
+  .row:last-child{border:none}
+  .row b{color:var(--ink);font-weight:600}
+  footer{text-align:center;font-size:8px;font-weight:600;color:var(--ink3);
+         letter-spacing:.3em;padding:18px 0 8px}
+
+  .state{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:22px}
+  .state::before{display:none}
+  .state .ico{font-size:24px;width:48px;height:48px;border-radius:16px;display:flex;
+    align-items:center;justify-content:center;background:rgba(150,125,100,.10);flex:0 0 auto}
+  .state .main{flex:1;min-width:0}
+  .state .t{font-size:19px;font-weight:700;color:var(--ink)}
+  .state .s{font-size:11px;color:var(--ink2);margin-top:5px;font-weight:500}
+  .state .eta{text-align:right;flex:0 0 auto}
+  .state .e{font-size:20px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+  .state .l{font-size:8px;font-weight:600;letter-spacing:.2em;color:var(--ink3);margin-top:5px}
+  .state.chg{background:linear-gradient(135deg,#eefaf5,#e2f6ee)}
+  .state.chg .ico{background:rgba(111,208,178,.24)}
+  .state.chg .t{color:#33a382}
+  .state.chg .e{color:#33a382}
+  .state.dis{background:linear-gradient(135deg,#fff4ee,#ffe9df)}
+  .state.dis .ico{background:rgba(255,157,118,.26)}
+  .state.dis .t{color:#e2703f}
+  .state.dis .e{color:#e2703f}
+</style>
+</head>
+<body>
+<div class="scan"></div>
+<div class="wrap">
+
+  <header>
+    <div class="brand">XGBMS<small>LiFePO4 · 20S · BLE</small></div>
+    <div class="status"><span class="dot" id="dot"></span><span id="stat">BOOT</span></div>
+  </header>
+
+  <div class="card hero">
+    <span class="cor c1"></span><span class="cor c2"></span><span class="cor c3"></span><span class="cor c4"></span>
+    <div class="volt">
+      <div><span class="num" id="vtot">--.--</span><span class="unit">V</span></div>
+      <div class="lbl">TOTAL VOLTAGE</div>
+    </div>
+    <div class="ring">
+      <div class="glow"></div>
+      <svg width="112" height="112">
+        <circle cx="56" cy="56" r="48" fill="none" stroke="rgba(0,255,195,.09)" stroke-width="7"/>
+        <circle id="arc" cx="56" cy="56" r="48" fill="none" stroke="#ff9d76" stroke-width="7"
+                stroke-linecap="round" stroke-dasharray="302" stroke-dashoffset="302"
+                style="transition:stroke-dashoffset .6s cubic-bezier(.4,1.4,.5,1)"/>
+      </svg>
+      <div class="txt"><div class="p"><span id="soc">--</span><span>%</span></div><div class="t">SOC</div></div>
+    </div>
+  </div>
+
+  <div class="card state idle" id="scard">
+    <div class="ico" id="sico">&#9208;</div>
+    <div class="main">
+      <div class="t" id="stext">静置</div>
+      <div class="s" id="ssub">-- </div>
+    </div>
+    <div class="eta">
+      <div class="e" id="seta">--</div>
+      <div class="l" id="setl">EST</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="k"><div class="v"><span id="cur">--</span><i>A</i></div><div class="n">CURRENT</div></div>
+    <div class="k" id="kdif"><div class="v"><span id="dif">--</span><i>mV</i></div><div class="n">MAX DIFF</div></div>
+    <div class="k"><div class="v"><span id="cap">--</span><i>Ah</i></div><div class="n">REMAIN</div></div>
+    <div class="k"><div class="v"><span id="pwr">--</span><i>W</i></div><div class="n">POWER</div></div>
+  </div>
+
+  <div class="card">
+    <span class="cor c1"></span><span class="cor c2"></span><span class="cor c3"></span><span class="cor c4"></span>
+    <div class="ttl"><span>CELL VOLTAGE · 20S</span><b id="cellrng">--</b></div>
+    <div class="cells" id="cells"></div>
+    <div class="cellaxis"><span>#01</span><span>#10</span><span>#20</span></div>
+  </div>
+
+  <div class="card">
+    <span class="cor c1"></span><span class="cor c2"></span><span class="cor c3"></span><span class="cor c4"></span>
+    <div class="ttl"><span>VOLTAGE TREND</span><b id="trng">--</b></div>
+    <canvas id="chart" height="152"></canvas>
+  </div>
+
+  <div class="card">
+    <span class="cor c1"></span><span class="cor c2"></span><span class="cor c3"></span><span class="cor c4"></span>
+    <div class="row"><span>MOS 温度</span><b id="tmos">--</b></div>
+    <div class="row"><span>箱内温度</span><b id="tin">--</b></div>
+    <div class="row"><span>循环次数</span><b id="cyc">--</b></div>
+    <div class="row"><span>保护状态</span><b id="prot">--</b></div>
+    <div class="row"><span>更新时间</span><b id="ts">--</b></div>
+  </div>
+
+  <footer>POWERED BY NIGHT SHIFT</footer>
+</div>
+<script>
+var $ = function(id){ return document.getElementById(id); };
+var hasBridge = (typeof xgbms !== "undefined");
+var hist = [];
+var MAXH = 90;
+
+var cellsEl = $('cells');
+var bars = [];
+for (var i = 0; i < 20; i++) {
+  var d = document.createElement('div');
+  d.className = 'cell';
+  d.style.height = '6%';
+  cellsEl.appendChild(d);
+  bars.push(d);
+}
+
+var arc = $('arc');
+var C = 2 * Math.PI * 48;
+
+function fit(canvas) {
+  var r = window.devicePixelRatio || 1;
+  var w = canvas.clientWidth || 320;
+  var h = parseInt(canvas.getAttribute('height'), 10);
+  canvas.width = w * r; canvas.height = h * r;
+  var c = canvas.getContext('2d');
+  c.setTransform(r, 0, 0, r, 0, 0);
+  return c;
+}
+var ctx = fit($('chart'));
+window.addEventListener('resize', function(){ ctx = fit($('chart')); draw(); });
+
+function draw() {
+  var c = $('chart');
+  var w = c.clientWidth, h = parseInt(c.getAttribute('height'), 10);
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = 'rgba(150,125,100,.10)'; ctx.lineWidth = 1;
+  for (var i = 0; i <= 4; i++) {
+    var y = 8 + (h - 26) * i / 4;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+  if (hist.length < 2) return;
+  var vs = hist.map(function(p){ return p.v; });
+  var lo = Math.min.apply(null, vs) - 0.12, hi = Math.max.apply(null, vs) + 0.12;
+  var X = function(i){ return i / (MAXH - 1) * w; };
+  var Y = function(v){ return 8 + (h - 26) * (1 - (v - lo) / (hi - lo || 1)); };
+  var off = MAXH - hist.length;
+  var g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, 'rgba(255,157,118,.30)');
+  g.addColorStop(.6, 'rgba(111,208,178,.14)');
+  g.addColorStop(1, 'rgba(255,157,118,0)');
+  ctx.beginPath();
+  hist.forEach(function(p, i){ i ? ctx.lineTo(X(i + off), Y(p.v)) : ctx.moveTo(X(i + off), Y(p.v)); });
+  ctx.lineTo(X(hist.length - 1 + off), h); ctx.lineTo(X(off), h); ctx.closePath();
+  ctx.fillStyle = g; ctx.fill();
+
+  ctx.beginPath();
+  hist.forEach(function(p, i){ i ? ctx.lineTo(X(i + off), Y(p.v)) : ctx.moveTo(X(i + off), Y(p.v)); });
+  ctx.strokeStyle = '#ff9d76'; ctx.lineWidth = 2.4;
+  ctx.shadowColor = 'rgba(255,157,118,.85)'; ctx.shadowBlur = 12;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  var lx = X(hist.length - 1 + off), ly = Y(vs[vs.length - 1]);
+  ctx.beginPath(); ctx.arc(lx, ly, 4.5, 0, 7);
+  ctx.fillStyle = '#fffdfa'; ctx.shadowColor = '#ff9d76'; ctx.shadowBlur = 14;
+  ctx.fill(); ctx.shadowBlur = 0;
+}
+
+function flash(el) {
+  el.classList.remove('pulse');
+  void el.offsetWidth;
+  el.classList.add('pulse');
+}
+
+function render(d) {
+  var vt = $('vtot');
+  if (vt.textContent !== d.v.toFixed(2)) flash(vt);
+  vt.textContent = d.v.toFixed(2);
+
+  var soc = Math.max(0, Math.min(100, d.soc));
+  $('soc').textContent = soc;
+  arc.style.strokeDashoffset = C * (1 - soc / 100);
+  arc.setAttribute('stroke', soc < 15 ? '#ff8fa3' : soc < 30 ? '#ffcf5c' : '#ff9d76');
+
+  var mode = d.mode || 'idle';
+  var sc = $('scard');
+  sc.className = 'card state ' + mode;
+  $('sico').innerHTML = mode === 'chg' ? '&#9889;' : mode === 'dis' ? '&#8681;' : '&#9208;';
+  $('stext').textContent = mode === 'chg' ? '充电中' : mode === 'dis' ? '放电中' : '静置';
+  $('ssub').textContent = Math.abs(d.i).toFixed(2) + ' A \u00b7 '
+      + (mode === 'chg' ? '输入' : mode === 'dis' ? '输出' : '待机');
+  if (mode === 'idle' || !d.eta || d.eta <= 0) {
+    $('seta').textContent = '--';
+    $('setl').textContent = 'EST';
+  } else {
+    var mm = d.eta;
+    $('seta').textContent = mm >= 60 ? (Math.floor(mm / 60) + 'h' + (mm % 60) + 'm') : (mm + 'm');
+    $('setl').textContent = mode === 'chg' ? 'TO FULL' : 'TO EMPTY';
+  }
+
+  $('cur').textContent = Math.abs(d.i).toFixed(2);
+  $('dif').textContent = d.diff;
+  $('cap').textContent = d.cap.toFixed(2);
+  $('pwr').textContent = Math.abs(d.v * d.i).toFixed(0);
+  $('kdif').className = 'k' + (d.diff > 80 ? ' bad' : d.diff > 40 ? ' warn' : '');
+
+  if (d.cells && d.cells.length) {
+    var hi = Math.max.apply(null, d.cells), lo = Math.min.apply(null, d.cells);
+    d.cells.forEach(function(v, i){
+      if (i >= bars.length) return;
+      var t = (v - lo) / (hi - lo || 1);
+      bars[i].style.height = (26 + t * 74) + '%';
+      bars[i].className = 'cell' + (v === lo ? ' lo' : v === hi ? ' hi' : '');
+    });
+    $('cellrng').textContent = lo + ' ~ ' + hi + ' mV';
+  }
+
+  $('tmos').textContent = (d.tmos == null ? '--' : d.tmos + ' °C');
+  $('tin').textContent = (d.tin == null ? '--' : d.tin + ' °C');
+  $('cyc').textContent = (d.cyc == null ? '--' : d.cyc);
+  $('prot').textContent = d.prot || '无告警';
+  $('ts').textContent = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+
+  hist.push({ v: d.v });
+  if (hist.length > MAXH) hist.shift();
+  $('trng').textContent = (hi0() || '') + d.v.toFixed(2) + ' V';
+  draw();
+}
+
+function hi0() { return ''; }
+
+function setState(on) {
+  var el = $('dot');
+  el.className = 'dot' + (on ? ' on' : '');
+  if (!on) $('stat').textContent = $('stat').textContent;
+}
+
+function tick() {
+  var x = new XMLHttpRequest();
+  x.open("GET", "data.json?_=" + Date.now(), true);
+  x.onreadystatechange = function () {
+    if (x.readyState !== 4) return;
+    if (x.status === 200 || x.status === 0) {
+      try { render(JSON.parse(x.responseText)); setState(true); return; } catch (e) {}
+    }
+    setState(false);
+  };
+  try { x.send(); } catch (e) { setState(false); }
+}
+
+if (!hasBridge) { tick(); setInterval(tick, 3000); }
+
+window.onBms = function (o) {
+  if (!o) return;
+  if (o.state && o.state !== "ok") {
+    var m = { scanning:"SCANNING", connecting:"LINKING", connected:"LINKING",
+              disconnected:"LOST", "no-bt":"NO BT", "no-service":"NO SVC",
+              "no-scanner":"NO SCAN", "connect-fail":"FAIL" };
+    var dot = $('dot');
+    dot.className = 'dot' + (o.state === "scanning" ? ' scan' : '');
+    $('stat').textContent = m[o.state] || String(o.state).toUpperCase();
+    return;
+  }
+  render(o);
+  setState(true);
+  if (o.state === "ok") $('stat').textContent = "BLE LIVE";
+};
+</script>
+</body>
+</html>
